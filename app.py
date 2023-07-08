@@ -1,12 +1,25 @@
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
+from tkinter.font import Font
+from fontawesome import icons
 
 
 class VentanaPrincipal(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Sistema de Atención")
-        self.geometry("800x600")
+        self.geometry("949x476")
+        self.configure(bg="#f0f0f0")  # Define el fondo de la ventana principal
+
+        # Crear la imagen de fondo
+        self.background_image = ImageTk.PhotoImage(
+            Image.open("background.png"))
+        self.background_label = tk.Label(self, image=self.background_image)
+        self.background_label.place(x=0, y=0, relwidth=1, relheight=1)
+
+        # Crear la fuente para los íconos de FontAwesome
+        self.icon_font = Font(family="FontAwesome", size=20)
 
         # Crear las etiquetas para indicar el tipo de atención
         estilo_etiqueta = ttk.Style()
@@ -20,7 +33,7 @@ class VentanaPrincipal(tk.Tk):
             self, text="Atención", style="EstiloEtiqueta.TLabel")
         self.etiqueta_atencion.place(x=200, y=20)
 
-        # Crear las listas de atención
+        # # Crear los listBox de atención y caja
         self.lista_caja = tk.Listbox(self)
         self.lista_caja.place(x=600, y=50)
         self.lista_caja.configure(font=("Arial", 12))
@@ -37,22 +50,22 @@ class VentanaPrincipal(tk.Tk):
             self, text="Nueva Atención", style="EstiloBoton.TButton", command=self.abrir_formulario)
         self.boton_nueva_atencion.place(relx=0.5, rely=0.8, anchor=tk.CENTER)
 
-        self.contador_caja = 1  # Variable contador para la lista de caja
-        self.contador_atencion = 1  # Variable contador para la lista de atención
+        self.contador_caja = 1  # Variable contador para el árbol de caja
+        self.contador_atencion = 1  # Variable contador para el árbol de atención
 
-        # Llamar a la función verificar_listas cada 3 segundos
+        # Llamar a la función verificar_listas cada 30 segundos
         self.after(30000, self.verificar_listas)
 
     def verificar_listas(self):
         if self.lista_caja.size() > self.lista_atencion.size():
-            # Eliminar el primer ítem de la lista de caja
+            # Eliminar el primer ítem del árbol de caja
             self.lista_caja.delete(0)
         elif self.lista_atencion.size() > self.lista_caja.size():
-            # Eliminar el primer ítem de la lista de atención
+            # Eliminar el primer ítem del árbol de atención
             self.lista_atencion.delete(0)
 
-        # Llamar a la función verificar_listas nuevamente después de 3 segundos
-        self.after(20000, self.verificar_listas)
+        # Llamar a la función verificar_listas nuevamente después de 30 segundos
+        self.after(30000, self.verificar_listas)
 
     def abrir_formulario(self):
         formulario = Formulario(self)
@@ -64,7 +77,13 @@ class Formulario(tk.Toplevel):
         super().__init__(ventana_principal)
         self.ventana_principal = ventana_principal  # Referencia a la ventana principal
         self.title("Nueva Atención")
-        self.geometry("400x300")
+        self.geometry("400x200")
+        self.configure(bg="#f0f0f0")
+
+        # Crear el ícono de nuevo cliente
+        self.cliente_icon = tk.Label(
+            self, text=icons["user"], font=self.ventana_principal.icon_font, bg="#f0f0f0")
+        self.cliente_icon.place(x=20, y=20)
 
         # Crear el contenedor principal con estilo
         estilo_contenedor = ttk.Style()
@@ -101,30 +120,28 @@ class Formulario(tk.Toplevel):
             contenedor, text="Tipo de Atención:", style="EstiloEtiqueta.TLabel")
         tipo_atencion_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 
-        self.tipo_atencion_combobox = ttk.Combobox(
-            contenedor, values=["Caja", "Atención"], style="TCombobox")
-        self.tipo_atencion_combobox.grid(row=2, column=1, padx=10, pady=10)
+        self.tipo_atencion_combo = ttk.Combobox(contenedor, values=["Atención", "Caja",],
+                                                state="readonly")
+        self.tipo_atencion_combo.grid(row=2, column=1, padx=10, pady=10)
 
         # Crear el botón "Guardar" con estilo
-        estilo_boton = ttk.Style()
-        estilo_boton.configure("EstiloBoton.TButton", font=(
-            "Arial", 12), foreground="white", background="#007bff")
-        boton_guardar = ttk.Button(
-            contenedor, text="Guardar", style="EstiloBoton.TButton", command=self.guardar_cliente)
-        boton_guardar.grid(row=3, columnspan=2, padx=10, pady=10)
+        guardar_button = ttk.Button(contenedor, text="Guardar", style="EstiloBoton.TButton",
+                                    command=self.guardar_atencion)
+        guardar_button.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
-    def guardar_cliente(self):
-        numero_documento = self.numero_documento_entry.get()
+    def guardar_atencion(self):
+        tipo_atencion = self.tipo_atencion_combo.get()
         nombre = self.nombre_entry.get()
-        tipo_atencion = self.tipo_atencion_combobox.get()
 
         if tipo_atencion == "Caja":
+            # Insertar en el árbol de caja
             identificacion = f"CA{self.ventana_principal.contador_caja}"
             self.ventana_principal.lista_caja.insert(
                 tk.END, f"{identificacion} - {nombre}")
             self.ventana_principal.contador_caja += 1
         elif tipo_atencion == "Atención":
-            identificacion = f"AT{self.ventana_principal.contador_atencion}"
+            # Insertar en el árbol de atención
+            identificacion = f"CA{self.ventana_principal.contador_atencion}"
             self.ventana_principal.lista_atencion.insert(
                 tk.END, f"{identificacion} - {nombre}")
             self.ventana_principal.contador_atencion += 1
